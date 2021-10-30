@@ -1,5 +1,6 @@
 MagPin1 = 21
 MagPin2 = 20
+BiperPin = 26
 rooms_to_pins = {
     '44': 21,
     '45': 20
@@ -26,9 +27,34 @@ mycursor = mydb.cursor()
 GPIO.setmode(GPIO.BCM)      
 GPIO.setup(MagPin1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(MagPin2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(BiperPin, GPIO.OUT)
+
 GPIO.setwarnings(False)
 reader = SimpleMFRC522()
 
+def biper():
+    while True:
+        GPIO.output(BiperPin, 1)
+        sleep(1)
+        GPIO.output(BiperPin, 0)
+        sleep(1)
+def bipOnce():
+        GPIO.output(BiperPin, 1)
+        sleep(0.5)
+        GPIO.output(BiperPin, 0)
+def bipTwice():
+        for i in range(2):
+            GPIO.output(BiperPin, 1)
+            sleep(0.5)
+            GPIO.output(BiperPin, 0)
+            sleep(0.5)
+def bipThrice():
+        for i in range(3):
+            GPIO.output(BiperPin, 1)
+            sleep(0.5)
+            GPIO.output(BiperPin, 0)
+            sleep(0.5)
+    
 
 def rfidScaner():
     while True:
@@ -39,6 +65,7 @@ def rfidScaner():
         mycursor.execute(roomsAndEnGet)
         restuple = mycursor.fetchall()
         print(restuple)
+        bipTwice()
         
         
 def testSecondFunction():
@@ -53,6 +80,9 @@ def readMagState(names_to_pins):
     return names_to_status
 
 rfidThread = Thread(target=rfidScaner)
+bipThread = Thread(target=biper)
+
 #backThread = Thread(target=testSecondFunction)
 rfidThread.start()
+#bipThread.start()
 #backThread.start()
