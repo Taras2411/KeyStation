@@ -12,8 +12,12 @@ mydb = mysql.connector.connect(
         
         
 mycursor = mydb.cursor()
-sql = "SELECT Card, en FROM key_station.Cards JOIN key_station.Names_cards ON key_station.Cards.id = key_station.Names_cards.Card_id JOIN key_station.Names ON key_station.Names_cards.Name_id = key_station.Names.id WHERE name IN ('Ivan')"
-        
+card1 = '699451644659'
+sql = f"SELECT FIO FROM key_station.Cards JOIN key_station.Teachers ON key_station.Cards.TeacherId = key_station.Teachers.id WHERE Card IN ({card1})"
+
+
+
+
 mycursor.execute(sql)
 
 myresult = mycursor.fetchall()
