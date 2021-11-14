@@ -38,7 +38,7 @@ mydb = mysql.connector.connect(
     port='3306',
     user="admin",
     #password=os.environ['DBPASSWORD'],
-    password= '',
+    password= 'ilovetea',
     database="key_station")
     
 mycursor = mydb.cursor()
@@ -92,6 +92,7 @@ def rfidScaner():
         LastDetectTime = TimeFromStart()
         
         print("DETECTED")
+        bipOnce()
         #print(id)
         #temp = str(id)
         #roomsAndEnGet = f"SELECT Name,Teachers.en,Cards.en,FIO FROM key_station.Keys JOIN key_station.TeachersToKeys ON key_station.Keys.id = key_station.TeachersToKeys.KeyId JOIN key_station.Teachers ON key_station.Teachers.id = key_station.TeachersToKeys.TeacherId JOIN key_station.Cards ON key_station.Cards.TeacherId = key_station.Teachers.id WHERE Card IN ('{temp}')"
@@ -119,6 +120,7 @@ def readMagState(names_to_pins):
 
 rfidThread = Thread(target=rfidScaner)
 bipThread = Thread(target=biper)
+
 prevPinState =  readMagState(rooms_to_pins)
 def WinDef():
     while True:
@@ -131,10 +133,36 @@ def WinDef():
                 print(TimeFromStart()- LastDetectTime)
                 print("You have some time!")
                 print("is dif:")
-                print(readMagState(rooms_to_pins) - lastPinState ) 
+                ErrFlag = 0
+                ErrList = []
+                for i in lastPinState:
+                    if lastPinState[i] != prevPinState[i]:
+                        print(f'key {i} with value {lastPinState[i]} != {prevPinState[i]} from cycle begin')
+                        ErrFlag += 1
+                        ErrList.append(i)
+                print(f'number of errs:{ErrFlag}')
+                print(f'list or errs:{ErrList}')
+                temp = str(LastCardCode)
+                roomsAndEnGet = f"SELECT Name,Teachers.en,Cards.en,FIO FROM key_station.Keys JOIN key_station.TeachersToKeys ON key_station.Keys.id = key_station.TeachersToKeys.KeyId JOIN key_station.Teachers ON key_station.Teachers.id = key_station.TeachersToKeys.TeacherId JOIN key_station.Cards ON key_station.Cards.TeacherId = key_station.Teachers.id WHERE Card IN ('{temp}')"
+                mycursor.execute(roomsAndEnGet)
+                response = mycursor.fetchall()
+                for y in ErrList:
+                    for z in response:
+                        if y == z[0]:
+                            print("permision is ok!")
+                            ErrFlag -= 1
+                            ErrList.remove(y)
+                print(f'final err count is {ErrList}')
+                if len(ErrList) == 0 :
+                    print("ALL IS GOOD")
+                    prevPinState =  readMagState(rooms_to_pins)#ВОТ ТУТ
+                    break 
+                else:
+                    bipThrice()
             else:
-                print("Time is out!")    
-            
+                    print("Time is out!")
+                    bipThrice()
+    print("FUNC STOP")       
 def TimeFromStart():
     ret = time.time()- trueStartTime
     return ret
