@@ -1,7 +1,7 @@
 MagPin1 = 21
 MagPin2 = 20
 BiperPin = 26
-timeToGetKey = 25
+timeToGetKey = 15
 rooms_to_pins = {
     '44': 21,
     '45': 20,
@@ -37,8 +37,8 @@ mydb = mysql.connector.connect(
     host="localhost",
     port='3306',
     user="admin",
-    #password=os.environ['DBPASSWORD'],
-    password= 'ilovetea',
+    password=os.environ['DBPASSWORD'],
+    #password= 'ilovetea',
     database="key_station")
     
 mycursor = mydb.cursor()
@@ -83,9 +83,11 @@ def bipThrice():
     
 
 def rfidScaner():
+    
     while True:
         
         id, text = reader.read()
+        pixels.fill((0,0,0))
         global LastCardCode
         global LastDetectTime
         LastCardCode = id
@@ -121,14 +123,16 @@ def readMagState(names_to_pins):
 rfidThread = Thread(target=rfidScaner)
 bipThread = Thread(target=biper)
 
-prevPinState =  readMagState(rooms_to_pins)
+
 def WinDef():
+    prevPinState =  readMagState(rooms_to_pins)
     while True:
         sleep(0.1)
         lastPinState = readMagState(rooms_to_pins)
-        print(lastPinState)
-        if lastPinState != prevPinState:
-            print("ALARM! DIF DETECT")
+        print(readMagState(rooms_to_pins))
+        if readMagState(rooms_to_pins) != prevPinState:
+            print(f"ALARM! DIF DETECT last: {readMagState(rooms_to_pins)} prev: {prevPinState}")
+            
             if TimeFromStart()- LastDetectTime < timeToGetKey:
                 print(TimeFromStart()- LastDetectTime)
                 print("You have some time!")
@@ -155,14 +159,49 @@ def WinDef():
                 print(f'final err count is {ErrList}')
                 if len(ErrList) == 0 :
                     print("ALL IS GOOD")
-                    prevPinState =  readMagState(rooms_to_pins)#ВОТ ТУТ
-                    break 
+                    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+                    print(prevPinState)
+                    prevPinState =  readMagState(rooms_to_pins)
+                    print(prevPinState)
+                    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+                    
+                    
+                    
+                    
                 else:
                     bipThrice()
+                    print(f'final err count is {ErrList}')
             else:
-                    print("Time is out!")
-                    bipThrice()
-    print("FUNC STOP")       
+                print('time is out ')
+                bipThrice()
+    print("FUNC STOP")
+    
+    
+def LedIndication():
+    while True:
+        if TimeFromStart()- LastDetectTime < timeToGetKey:
+            temp = str(LastCardCode)
+            roomsAndEnGet = f"SELECT Name,Teachers.en,Cards.en,FIO FROM key_station.Keys JOIN key_station.TeachersToKeys ON key_station.Keys.id = key_station.TeachersToKeys.KeyId JOIN key_station.Teachers ON key_station.Teachers.id = key_station.TeachersToKeys.TeacherId JOIN key_station.Cards ON key_station.Cards.TeacherId = key_station.Teachers.id WHERE Card IN ('{temp}')"
+            mycursor.execute(roomsAndEnGet)
+            restuple = mycursor.fetchall()
+            for i in restuple:
+               roomnum = i[0]
+               rooms_to_leds[roomnum]
+               print(rooms_to_leds[roomnum])
+               
+               pixels[rooms_to_leds[roomnum]]=((0, 255, 0))
+               print(pixels)
+            num = 0
+#            for i in pixels:
+#                if i == [0,0,0]:
+#                    print('una key')
+#                    pixels[num] = ((0,0,0))
+#                num += 1
+        else:
+            pixels.fill((0,0,0))
+    
+    
+    
 def TimeFromStart():
     ret = time.time()- trueStartTime
     return ret
@@ -172,5 +211,7 @@ def TimeFromStart():
 WinDefThread = Thread(target=WinDef)
 WinDefThread.start()
 rfidThread.start()
+LedIndicationThread = Thread(target=LedIndication)
+LedIndicationThread.start()
 #bipThread.start()
 #backThread.start()
