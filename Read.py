@@ -126,11 +126,12 @@ bipThread = Thread(target=biper)
 
 def WinDef():
     prevPinState =  readMagState(rooms_to_pins)
+    pixels.fill((0,0,0))
     while True:
         
         ###LED IND START
         
-        pixels.fill((0,0,0))
+        
         if TimeFromStart()- LastDetectTime < timeToGetKey:
             
             temp = str(LastCardCode)
@@ -141,13 +142,19 @@ def WinDef():
                for z in restuple:
                    if i in z:
                        pixels[rooms_to_leds[i]]=((0, 255, 0))
-                   #else:
-                       #pixels[rooms_to_leds[i]]=((0, 0, 0))
+                   else:
+                       pixels[rooms_to_leds[i]]=((0, 0, 0))
             
-            num = 0
+            
 
         else:
-            pixels.fill((0,0,0))
+            num = 0
+            print(f"pixels before clean {pixels}")
+            for i in pixels:
+                if i != [255,0,0]:
+                    print('DEL')
+                    pixels[num] = ((0,0,0))
+                num+=1
             pixels.show()
         
         
