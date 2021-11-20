@@ -127,6 +127,31 @@ bipThread = Thread(target=biper)
 def WinDef():
     prevPinState =  readMagState(rooms_to_pins)
     while True:
+        
+        ###LED IND START
+        
+        pixels.fill((0,0,0))
+        if TimeFromStart()- LastDetectTime < timeToGetKey:
+            
+            temp = str(LastCardCode)
+            roomsAndEnGet = f"SELECT Name,Teachers.en,Cards.en,FIO FROM key_station.Keys JOIN key_station.TeachersToKeys ON key_station.Keys.id = key_station.TeachersToKeys.KeyId JOIN key_station.Teachers ON key_station.Teachers.id = key_station.TeachersToKeys.TeacherId JOIN key_station.Cards ON key_station.Cards.TeacherId = key_station.Teachers.id WHERE Card IN ('{temp}')"
+            mycursor.execute(roomsAndEnGet)
+            restuple = mycursor.fetchall()
+            for i in rooms_to_leds:
+               for z in restuple:
+                   if i in z:
+                       pixels[rooms_to_leds[i]]=((0, 255, 0))
+                   #else:
+                       #pixels[rooms_to_leds[i]]=((0, 0, 0))
+            
+            num = 0
+
+        else:
+            pixels.fill((0,0,0))
+            pixels.show()
+        
+        
+    ###LED IND END
         sleep(0.1)
         lastPinState = readMagState(rooms_to_pins)
         print(readMagState(rooms_to_pins))
@@ -157,6 +182,8 @@ def WinDef():
                             ErrFlag -= 1
                             ErrList.remove(y)
                 print(f'final err count is {ErrList}')
+                for i in ErrList:
+                    pixels[rooms_to_leds[i]] = ((255,0,0))
 
                 
                 if len(ErrList) == 0 :
@@ -171,14 +198,15 @@ def WinDef():
                     
                     
                 else:
+                    pixels.show()
                     bipThrice()
                     print(f'final err count is {ErrList}')
-                    for i in ErrList:
-                        pixels[rooms_to_leds[i]] = (255,0,0)
                     
             else:
                 print('time is out ')
+                pixels.show()
                 bipThrice()
+        pixels.show()
     print("FUNC STOP")
     
     
@@ -201,11 +229,7 @@ def LedIndication():
                        #pixels[rooms_to_leds[i]]=((0, 0, 0))
             pixels.show()
             num = 0
-#            for i in pixels:
-#                if i == [0,0,0]:
-#                    print('una key')
-#                    pixels[num] = ((0,0,0))
-#                num += 1
+
         else:
             pixels.fill((0,0,0))
             pixels.show()
@@ -222,6 +246,6 @@ WinDefThread = Thread(target=WinDef)
 WinDefThread.start()
 rfidThread.start()
 LedIndicationThread = Thread(target=LedIndication)
-LedIndicationThread.start()
+#LedIndicationThread.start()
 #bipThread.start()
 #backThread.start()
