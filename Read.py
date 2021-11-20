@@ -28,7 +28,7 @@ pixel_pin = board.D18
 num_pixels = 3
 ORDER = neopixel.GRB
 pixels = neopixel.NeoPixel(
-    pixel_pin, num_pixels, brightness=0.2, auto_write=True, pixel_order=ORDER
+    pixel_pin, num_pixels, brightness=0.2, auto_write=False, pixel_order=ORDER
 )
 
 
@@ -87,7 +87,7 @@ def rfidScaner():
     while True:
         
         id, text = reader.read()
-        pixels.fill((0,0,0))
+        #pixels.fill((0,0,0))
         global LastCardCode
         global LastDetectTime
         LastCardCode = id
@@ -157,6 +157,8 @@ def WinDef():
                             ErrFlag -= 1
                             ErrList.remove(y)
                 print(f'final err count is {ErrList}')
+
+                
                 if len(ErrList) == 0 :
                     print("ALL IS GOOD")
                     print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
@@ -171,6 +173,9 @@ def WinDef():
                 else:
                     bipThrice()
                     print(f'final err count is {ErrList}')
+                    for i in ErrList:
+                        pixels[rooms_to_leds[i]] = (255,0,0)
+                    
             else:
                 print('time is out ')
                 bipThrice()
@@ -178,19 +183,23 @@ def WinDef():
     
     
 def LedIndication():
+    pixels.fill((0,0,0))
+    pixels.show()
     while True:
+        pixels.fill((0,0,0))
         if TimeFromStart()- LastDetectTime < timeToGetKey:
+            
             temp = str(LastCardCode)
             roomsAndEnGet = f"SELECT Name,Teachers.en,Cards.en,FIO FROM key_station.Keys JOIN key_station.TeachersToKeys ON key_station.Keys.id = key_station.TeachersToKeys.KeyId JOIN key_station.Teachers ON key_station.Teachers.id = key_station.TeachersToKeys.TeacherId JOIN key_station.Cards ON key_station.Cards.TeacherId = key_station.Teachers.id WHERE Card IN ('{temp}')"
             mycursor.execute(roomsAndEnGet)
             restuple = mycursor.fetchall()
-            for i in restuple:
-               roomnum = i[0]
-               rooms_to_leds[roomnum]
-               print(rooms_to_leds[roomnum])
-               
-               pixels[rooms_to_leds[roomnum]]=((0, 255, 0))
-               print(pixels)
+            for i in rooms_to_leds:
+               for z in restuple:
+                   if i in z:
+                       pixels[rooms_to_leds[i]]=((0, 255, 0))
+                   #else:
+                       #pixels[rooms_to_leds[i]]=((0, 0, 0))
+            pixels.show()
             num = 0
 #            for i in pixels:
 #                if i == [0,0,0]:
@@ -199,6 +208,7 @@ def LedIndication():
 #                num += 1
         else:
             pixels.fill((0,0,0))
+            pixels.show()
     
     
     
