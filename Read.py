@@ -58,6 +58,43 @@ GPIO.setwarnings(False)
 reader = SimpleMFRC522()
 LastCardCode = ''
 LastDetectTime = 0
+alarm = False
+
+
+def clearAllNonRed():
+    num = 0
+    print(f"pixels before clean {pixels}")
+    for i in pixels:
+        if i != [255,0,0]:
+            print('DEL__NON__RED')
+            pixels[num] = ((0,0,0))
+        num+=1
+    pixels.show()
+    
+
+
+
+def clearAllNonRedManual():
+    num = 0
+    print(f"pixels before clean {pixels}")
+    for i in pixels:
+        if i != [255,0,0]:
+            print('DEL__NON__RED')
+            pixels[num] = ((0,0,0))
+        num+=1
+    
+
+    
+def clearAllRed():
+    num = 0
+    print(f"pixels before clean {pixels}")
+    for i in pixels:
+        if i == [255,0,0]:
+            print('DEL_RED')
+            pixels[num] = ((0,0,0))
+        num+=1
+    pixels.show()
+
 def biper():
     while True:
         GPIO.output(BiperPin, 1)
@@ -131,7 +168,8 @@ def WinDef():
         
         ###LED IND START
         
-        
+        #pixels.fill((0,0,0))
+        clearAllNonRedManual()
         if TimeFromStart()- LastDetectTime < timeToGetKey:
             
             temp = str(LastCardCode)
@@ -142,20 +180,15 @@ def WinDef():
                for z in restuple:
                    if i in z:
                        pixels[rooms_to_leds[i]]=((0, 255, 0))
-                   else:
-                       pixels[rooms_to_leds[i]]=((0, 0, 0))
+                   #else:
+                       #pixels[rooms_to_leds[i]]=((0, 0, 0))
             
-            
+            num = 0
 
         else:
-            num = 0
-            print(f"pixels before clean {pixels}")
-            for i in pixels:
-                if i != [255,0,0]:
-                    print('DEL')
-                    pixels[num] = ((0,0,0))
-                num+=1
-            pixels.show()
+            clearAllNonRed()
+            #pixels.fill((0,0,0))
+            #pixels.show()
         
         
     ###LED IND END
@@ -206,13 +239,20 @@ def WinDef():
                     
                 else:
                     pixels.show()
-                    bipThrice()
+                    #bipThrice()
+                    
+                    global alarm
+                    alarm = True
                     print(f'final err count is {ErrList}')
                     
             else:
                 print('time is out ')
                 pixels.show()
-                bipThrice()
+                #bipThrice()
+        
+        else:
+            alarm = False
+            clearAllRed()
         pixels.show()
     print("FUNC STOP")
     
@@ -247,12 +287,25 @@ def TimeFromStart():
     ret = time.time()- trueStartTime
     return ret
 
+def Alarmer():
+    while True:
+        sleep(0.1)
+        global alarm
+        if alarm == True:
+            GPIO.output(BiperPin, 1)
+            sleep(0.5)
+            GPIO.output(BiperPin, 0)
+            sleep(0.5)
+
 
 #backThread = Thread(target=testSecondFunction)
 WinDefThread = Thread(target=WinDef)
 WinDefThread.start()
 rfidThread.start()
 LedIndicationThread = Thread(target=LedIndication)
+AlarmerThread = Thread(target=Alarmer)
+AlarmerThread.start()
+
 #LedIndicationThread.start()
 #bipThread.start()
 #backThread.start()
