@@ -38,7 +38,6 @@ mydb = mysql.connector.connect(
     port='3306',
     user="admin",
     password=os.environ['DBPASSWORD'],
-    #password= 'ilovetea',
     database="key_station")
     
 mycursor = mydb.cursor()
@@ -160,7 +159,7 @@ def readMagState(names_to_pins):
 rfidThread = Thread(target=rfidScaner)
 bipThread = Thread(target=biper)
 
-
+GblErrList = {}
 def WinDef():
     prevPinState =  readMagState(rooms_to_pins)
     pixels.fill((0,0,0))
@@ -186,7 +185,10 @@ def WinDef():
             num = 0
 
         else:
+
+            
             clearAllNonRed()
+            
             #pixels.fill((0,0,0))
             #pixels.show()
         
@@ -222,6 +224,7 @@ def WinDef():
                             ErrFlag -= 1
                             ErrList.remove(y)
                 print(f'final err count is {ErrList}')
+                GblErrList = ErrList
                 for i in ErrList:
                     pixels[rooms_to_leds[i]] = ((255,0,0))
 
@@ -246,8 +249,30 @@ def WinDef():
                     print(f'final err count is {ErrList}')
                     
             else:
+                
+                
+                #####
+                ErrFlag1 = 0
+                ErrList1 = []
+                for i in lastPinState:
+                    if lastPinState[i] != prevPinState[i]:
+                        print(f'1@key {i} with value {lastPinState[i]} != {prevPinState[i]} from cycle begin')
+                        ErrFlag1 += 1
+                        ErrList1.append(i)
+                print(f'1@number of errs:{ErrFlag1}')
+                print(f'1@list or errs:{ErrList1}')
+
+                print(f'1@final err count is {ErrList1}')
+                GblErrList = ErrList1
+                
+                
+                ####
+                
                 print('time is out ')
                 pixels.show()
+                alarm = True
+                for i in ErrList1:
+                    pixels[rooms_to_leds[i]] = ((255,0,0))
                 #bipThrice()
         
         else:
@@ -287,6 +312,7 @@ def TimeFromStart():
     ret = time.time()- trueStartTime
     return ret
 
+
 def Alarmer():
     while True:
         sleep(0.1)
@@ -305,6 +331,11 @@ rfidThread.start()
 LedIndicationThread = Thread(target=LedIndication)
 AlarmerThread = Thread(target=Alarmer)
 AlarmerThread.start()
+
+
+
+
+
 
 #LedIndicationThread.start()
 #bipThread.start()
