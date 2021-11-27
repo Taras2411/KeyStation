@@ -1,17 +1,19 @@
-MagPin1 = 21
-MagPin2 = 20
-BiperPin = 26
-timeToGetKey = 15
-rooms_to_pins = {
-    '44': 21,
-    '45': 20,
-    '46': 16
-    }
-rooms_to_leds = {
-    '44':0,
-    '45':1,
-    '46':2
-    }
+#BiperPin = 26
+#timeToGetKey = 15
+
+
+# rooms_to_pins = {
+#     '44': 21,
+#     '45': 20,
+#     '46': 16
+#     }
+# rooms_to_leds = {
+#     '44':0,
+#     '45':1,
+#     '46':2
+#     }
+
+
 
 from threading import Thread
 from time import sleep
@@ -20,6 +22,7 @@ import os
 import time
 import board
 import neopixel
+import configparser
 
 import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
@@ -33,6 +36,30 @@ pixels = neopixel.NeoPixel(
 
 
 
+config = configparser.ConfigParser()
+config.read('config.ini')
+dictionary = {}
+for section in config.sections():
+    dictionary[section] = {}
+    for option in config.options(section):
+        dictionary[section][option] = config.get(section, option)
+
+testDict = dictionary['ROOMS_TO_PINS']
+for i in testDict:   
+    testDict[i] = int(testDict[i])
+print(testDict)
+
+rooms_to_pins = testDict
+
+testDict2 = dictionary['ROOMS_TO_LEDS']
+for i in testDict2:   
+    testDict2[i] = int(testDict2[i])
+rooms_to_leds = testDict2
+print(testDict2)
+
+BiperPin = int(dictionary['OTHER']['biperpin'])
+timeToGetKey = int(dictionary['OTHER']['timetogetkey'])
+
 mydb = mysql.connector.connect(
     host="localhost",
     port='3306',
@@ -45,8 +72,7 @@ mycursor = mydb.cursor()
 
 
 GPIO.setmode(GPIO.BCM)      
-GPIO.setup(MagPin1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(MagPin2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
 for i in rooms_to_pins:
     GPIO.setup(rooms_to_pins[i], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     print(f"{rooms_to_pins[i]} inited!")
